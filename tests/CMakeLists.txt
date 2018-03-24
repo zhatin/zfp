@@ -50,43 +50,41 @@ add_subdirectory(src)
 if(MSVC)
   list(APPEND GTEST_ARGS "-DCMAKE_CXX_FLAGS=/D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING")
 endif()
-# TODO: spend time getting gtest to compile on MinGW
-if(NOT MINGW)
-  # clone googletest 1.8.0 into /build
-  configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
-  execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" ${GTEST_ARGS} .
-    RESULT_VARIABLE result
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/googletest-download
-  )
-  if(result)
-    message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-  endif()
-  # build gtest
-  execute_process(COMMAND ${CMAKE_COMMAND} --build .
-    RESULT_VARIABLE result
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/googletest-download
-  )
-  if(result)
-    message(FATAL_ERROR "Build step for googletest failed: ${result}")
-  endif()
 
-  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-  add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-    ${CMAKE_BINARY_DIR}/googletest-build
-  )
-
-  if(CMAKE_VERSION VERSION_LESS 2.8.11)
-    include_directories("${gtest_SOURCE_DIR}/include")
-  endif()
-
-  # needed to compile zfp tests with gtest on MSVC
-  if(MSVC)
-    target_compile_definitions(gtest_main INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
-  endif()
-
-  add_subdirectory(array)
+# clone googletest 1.8.0 into /build
+configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" ${GTEST_ARGS} .
+  RESULT_VARIABLE result
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/googletest-download
+)
+if(result)
+  message(FATAL_ERROR "CMake step for googletest failed: ${result}")
 endif()
+# build gtest
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+  RESULT_VARIABLE result
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/googletest-download
+)
+if(result)
+  message(FATAL_ERROR "Build step for googletest failed: ${result}")
+endif()
+
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
+  ${CMAKE_BINARY_DIR}/googletest-build
+)
+
+if(CMAKE_VERSION VERSION_LESS 2.8.11)
+  include_directories("${gtest_SOURCE_DIR}/include")
+endif()
+
+# needed to compile zfp tests with gtest on MSVC
+if(MSVC)
+  target_compile_definitions(gtest_main INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
+endif()
+
+add_subdirectory(array)
 
 
 add_executable(testzfp testzfp.cpp fields.c)
