@@ -4,38 +4,38 @@ if(MINGW)
   list(APPEND GTEST_ARGS "-DCMAKE_SH=CMAKE_SH-NOTFOUND")
 endif()
 
-# clone cmocka 1.1.0 into /build
-list(APPEND CMOCKA_ARGS "-DWITH_STATIC_LIB=ON;-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER};-DUNIT_TESTING=OFF")
-
-include(ExternalProject)
-ExternalProject_Add(
-  cmocka_cloned
-  GIT_REPOSITORY    git://git.cryptomilk.org/projects/cmocka.git
-  GIT_TAG           cmocka-1.1.0
-  SOURCE_DIR        "${CMAKE_BINARY_DIR}/cmocka-src"
-  BINARY_DIR        "${CMAKE_BINARY_DIR}/cmocka-build"
-  CMAKE_ARGS        ${CMOCKA_ARGS}
-  BUILD_COMMAND     ${CMAKE_COMMAND} --build . WORKING_DIRECTORY ${CMAKE_BINARY_DIR} cmocka_static
-  INSTALL_COMMAND   ""
-)
-ExternalProject_Get_Property(cmocka_cloned source_dir binary_dir)
-
-# name static library cmocka, wire up against cmocka_cloned
-add_library(cmocka STATIC IMPORTED GLOBAL)
-
-# choose proper library path & extension
-if(MSVC)
-  set(IMPORTED_LOCATION_PATH "${binary_dir}/src/Debug/cmocka.lib")
-else()
-  set(IMPORTED_LOCATION_PATH "${binary_dir}/src/libcmocka.a")
-endif()
-set_property(TARGET cmocka
-  PROPERTY
-  IMPORTED_LOCATION "${IMPORTED_LOCATION_PATH}"
-)
-
-add_dependencies(cmocka cmocka_cloned)
-include_directories(${source_dir}/include)
+## clone cmocka 1.1.0 into /build
+#list(APPEND CMOCKA_ARGS "-DWITH_STATIC_LIB=ON;-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER};-DUNIT_TESTING=OFF")
+#
+#include(ExternalProject)
+#ExternalProject_Add(
+#  cmocka_cloned
+#  GIT_REPOSITORY    git://git.cryptomilk.org/projects/cmocka.git
+#  GIT_TAG           cmocka-1.1.0
+#  SOURCE_DIR        "${CMAKE_BINARY_DIR}/cmocka-src"
+#  BINARY_DIR        "${CMAKE_BINARY_DIR}/cmocka-build"
+#  CMAKE_ARGS        ${CMOCKA_ARGS}
+#  BUILD_COMMAND     ${CMAKE_COMMAND} --build . WORKING_DIRECTORY ${CMAKE_BINARY_DIR} cmocka_static
+#  INSTALL_COMMAND   ""
+#)
+#ExternalProject_Get_Property(cmocka_cloned source_dir binary_dir)
+#
+## name static library cmocka, wire up against cmocka_cloned
+#add_library(cmocka STATIC IMPORTED GLOBAL)
+#
+## choose proper library path & extension
+#if(MSVC)
+#  set(IMPORTED_LOCATION_PATH "${binary_dir}/src/Debug/cmocka.lib")
+#else()
+#  set(IMPORTED_LOCATION_PATH "${binary_dir}/src/libcmocka.a")
+#endif()
+#set_property(TARGET cmocka
+#  PROPERTY
+#  IMPORTED_LOCATION "${IMPORTED_LOCATION_PATH}"
+#)
+#
+#add_dependencies(cmocka cmocka_cloned)
+#include_directories(${source_dir}/include)
 
 
 # include home dir so #include statements are clear in test files
@@ -44,11 +44,10 @@ include_directories(${ZFP_SOURCE_DIR} ${ZFP_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(utils)
-add_subdirectory(src)
+#add_subdirectory(src)
 
-# needed to compile gtest on MSVC
 if(MSVC)
-  list(APPEND GTEST_ARGS "-DCMAKE_CXX_FLAGS=/D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING")
+  list(APPEND GTEST_ARGS "/D:_SILENCE_TR1_DEPRECATION_NAMESPACE_WARNING=1")
 endif()
 
 # clone googletest 1.8.0 into /build
