@@ -4,38 +4,38 @@ if(MINGW)
   list(APPEND GTEST_ARGS "-DCMAKE_SH=CMAKE_SH-NOTFOUND")
 endif()
 
-## clone cmocka 1.1.0 into /build
-#list(APPEND CMOCKA_ARGS "-DWITH_STATIC_LIB=ON;-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER};-DUNIT_TESTING=OFF")
-#
-#include(ExternalProject)
-#ExternalProject_Add(
-#  cmocka_cloned
-#  GIT_REPOSITORY    git://git.cryptomilk.org/projects/cmocka.git
-#  GIT_TAG           cmocka-1.1.0
-#  SOURCE_DIR        "${CMAKE_BINARY_DIR}/cmocka-src"
-#  BINARY_DIR        "${CMAKE_BINARY_DIR}/cmocka-build"
-#  CMAKE_ARGS        ${CMOCKA_ARGS}
-#  BUILD_COMMAND     ${CMAKE_COMMAND} --build . WORKING_DIRECTORY ${CMAKE_BINARY_DIR} cmocka_static
-#  INSTALL_COMMAND   ""
-#)
-#ExternalProject_Get_Property(cmocka_cloned source_dir binary_dir)
-#
-## name static library cmocka, wire up against cmocka_cloned
-#add_library(cmocka STATIC IMPORTED GLOBAL)
-#
-## choose proper library path & extension
-#if(MSVC)
-#  set(IMPORTED_LOCATION_PATH "${binary_dir}/src/Debug/cmocka.lib")
-#else()
-#  set(IMPORTED_LOCATION_PATH "${binary_dir}/src/libcmocka.a")
-#endif()
-#set_property(TARGET cmocka
-#  PROPERTY
-#  IMPORTED_LOCATION "${IMPORTED_LOCATION_PATH}"
-#)
-#
-#add_dependencies(cmocka cmocka_cloned)
-#include_directories(${source_dir}/include)
+# clone cmocka 1.1.0 into /build
+list(APPEND CMOCKA_ARGS "-DWITH_STATIC_LIB=ON;-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER};-DUNIT_TESTING=OFF")
+
+include(ExternalProject)
+ExternalProject_Add(
+  cmocka_cloned
+  GIT_REPOSITORY    git://git.cryptomilk.org/projects/cmocka.git
+  GIT_TAG           cmocka-1.1.0
+  SOURCE_DIR        "${CMAKE_BINARY_DIR}/cmocka-src"
+  BINARY_DIR        "${CMAKE_BINARY_DIR}/cmocka-build"
+  CMAKE_ARGS        ${CMOCKA_ARGS}
+  BUILD_COMMAND     ${CMAKE_COMMAND} --build . WORKING_DIRECTORY ${CMAKE_BINARY_DIR} cmocka_static
+  INSTALL_COMMAND   ""
+)
+ExternalProject_Get_Property(cmocka_cloned source_dir binary_dir)
+
+# name static library cmocka, wire up against cmocka_cloned
+add_library(cmocka STATIC IMPORTED GLOBAL)
+
+# choose proper library path & extension
+if(MSVC)
+  set(IMPORTED_LOCATION_PATH "${binary_dir}/src/Debug/cmocka.lib")
+else()
+  set(IMPORTED_LOCATION_PATH "${binary_dir}/src/libcmocka.a")
+endif()
+set_property(TARGET cmocka
+  PROPERTY
+  IMPORTED_LOCATION "${IMPORTED_LOCATION_PATH}"
+)
+
+add_dependencies(cmocka cmocka_cloned)
+include_directories(${source_dir}/include)
 
 
 # include home dir so #include statements are clear in test files
@@ -44,46 +44,48 @@ include_directories(${ZFP_SOURCE_DIR} ${ZFP_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(utils)
-#add_subdirectory(src)
+add_subdirectory(src)
 
 if(MSVC)
   list(APPEND GTEST_ARGS "/D:_SILENCE_TR1_DEPRECATION_NAMESPACE_WARNING=1")
 endif()
 
-# clone googletest 1.8.0 into /build
-configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" ${GTEST_ARGS} .
-  RESULT_VARIABLE result
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/googletest-download
-)
-if(result)
-  message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+if(NOT MINGW)
+  # clone googletest 1.8.0 into /build
+  configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+  execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" ${GTEST_ARGS} .
+    RESULT_VARIABLE result
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/googletest-download
+  )
+  if(result)
+    message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+  endif()
+  # build gtest
+  execute_process(COMMAND ${CMAKE_COMMAND} --build .
+    RESULT_VARIABLE result
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/googletest-download
+  )
+  if(result)
+    message(FATAL_ERROR "Build step for googletest failed: ${result}")
+  endif()
+
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+  add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
+    ${CMAKE_BINARY_DIR}/googletest-build
+  )
+
+  if(CMAKE_VERSION VERSION_LESS 2.8.11)
+    include_directories("${gtest_SOURCE_DIR}/include")
+  endif()
+
+  # needed to compile zfp tests with gtest on MSVC
+  if(MSVC)
+    target_compile_definitions(gtest_main INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
+  endif()
+
+  add_subdirectory(array)
 endif()
-# build gtest
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-  RESULT_VARIABLE result
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/googletest-download
-)
-if(result)
-  message(FATAL_ERROR "Build step for googletest failed: ${result}")
-endif()
-
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-  ${CMAKE_BINARY_DIR}/googletest-build
-)
-
-if(CMAKE_VERSION VERSION_LESS 2.8.11)
-  include_directories("${gtest_SOURCE_DIR}/include")
-endif()
-
-# needed to compile zfp tests with gtest on MSVC
-if(MSVC)
-  target_compile_definitions(gtest_main INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
-endif()
-
-add_subdirectory(array)
 
 
 add_executable(testzfp testzfp.cpp fields.c)
