@@ -151,7 +151,7 @@ TEST_F(TEST_FIXTURE, when_constructorFromSerializedWithInvalidHeader_then_except
   try {
     ZFP_ARRAY_TYPE arr(h, NULL);
     FailWhenNoExceptionThrown();
-  } catch (std::invalid_argument const & e) {
+  } catch (zfp::header_exception const & e) {
     EXPECT_EQ(e.what(), std::string("Invalid ZFP header"));
   } catch (std::exception const & e) {
     FailAndPrintException(e);
@@ -174,7 +174,7 @@ TEST_F(TEST_FIXTURE, given_serializedCompressedArrayFromWrongScalarType_when_con
   try {
     ZFP_ARRAY_TYPE arr2(h, arr.compressed_data());
     FailWhenNoExceptionThrown();
-  } catch (std::invalid_argument const & e) {
+  } catch (zfp::header_exception const & e) {
     EXPECT_EQ(e.what(), std::string("ZFP header specified an underlying scalar type different than that for this object"));
   } catch (std::exception const & e) {
     FailAndPrintException(e);
@@ -197,7 +197,7 @@ TEST_F(TEST_FIXTURE, given_serializedCompressedArrayFromWrongDimensionality_when
   try {
     ZFP_ARRAY_TYPE arr2(h, arr.compressed_data());
     FailWhenNoExceptionThrown();
-  } catch (std::invalid_argument const & e) {
+  } catch (zfp::header_exception const & e) {
     EXPECT_EQ(e.what(), std::string("ZFP header specified a dimensionality different than that for this object"));
   } catch (std::exception const & e) {
     FailAndPrintException(e);
@@ -251,7 +251,7 @@ TEST_F(TEST_FIXTURE, given_serializedNonFixedRateHeader_when_constructorFromSeri
   try {
     ZFP_ARRAY_TYPE arr2(h, compressedDataPtr, bufsizeBytes - headerSizeBytes);
     FailWhenNoExceptionThrown();
-  } catch (std::invalid_argument const & e) {
+  } catch (zfp::header_exception const & e) {
     EXPECT_EQ(e.what(), std::string("ZFP header specified a non fixed-rate mode, unsupported by this object"));
   } catch (std::exception const & e) {
     FailAndPrintException(e);
@@ -276,7 +276,7 @@ TEST_F(TEST_FIXTURE, given_incompleteChunkOfSerializedCompressedArray_when_const
   try {
     ZFP_ARRAY_TYPE arr2(h, arr.compressed_data(), arr.compressed_size() - 1);
     FailWhenNoExceptionThrown();
-  } catch (std::invalid_argument const & e) {
+  } catch (zfp::header_exception const & e) {
     EXPECT_EQ(e.what(), std::string("ZFP header expects a longer buffer than what was passed in"));
   } catch (std::exception const & e) {
     FailAndPrintException(e);
