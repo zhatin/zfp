@@ -14,7 +14,7 @@ run_config () {
   echo "${config_cmd}$1"
 
   # execute command
-  $(${config_cmd}$1)
+  eval "${config_cmd}$1"
 }
 
 run_build () {
