@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+set -e
 
 # pass additional args in $1 (starting with whitespace character)
 run_config () {
@@ -29,7 +30,7 @@ run_build () {
   echo "${build_cmd}"
 
   # execute command
-  $(${build_cmd})
+  eval "${build_cmd}"
 }
 
 # pass additional args in $1 (starting with whitespace character)
@@ -39,7 +40,7 @@ run_tests () {
   echo "${test_cmd}$1"
 
   # execute command
-  $(${test_cmd}$1)
+  eval "${test_cmd}$1"
 }
 
 # create build dir for out-of-source build
