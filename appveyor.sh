@@ -2,19 +2,19 @@
 
 # pass additional args in $1 (starting with whitespace character)
 run_config () {
-  config_cmd=(cmake -G "$GENERATOR" "-DCMAKE_BUILD_TYPE=$BUILD_TYPE" ..)
+  config_cmd="cmake -G \"$GENERATOR\" -DCMAKE_BUILD_TYPE=$BUILD_TYPE .."
 
   # satisfy mingw builds
   if [ $COMPILER != "msvc" ]
   then
-    config_cmd=(${config_cmd[@]} -DCMAKE_SH=CMAKE_SH-NOTFOUND)
+    config_cmd="${config_cmd} -DCMAKE_SH=CMAKE_SH-NOTFOUND"
   fi
 
-  echo "${config_cmd[@]}"
-  echo "${config_cmd[@]}$1"
+  echo "${config_cmd}"
+  echo "${config_cmd}$1"
 
   # execute command
-  $(${config_cmd[@]}$1)
+  $(${config_cmd}$1)
 }
 
 run_build () {
