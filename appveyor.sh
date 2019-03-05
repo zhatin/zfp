@@ -1,41 +1,59 @@
 #!/usr/bin/env sh
 
+# pass additional args in $1 (starting with whitespace character)
+run_config () {
+  config_cmd="cmake -G \"$GENERATOR\" -DCMAKE_BUILD_TYPE=$BUILD_TYPE .."
+
+  # satisfy mingw builds
+  if [ $COMPILER != "msvc" ]
+  then
+    config_cmd="${config_cmd} -DCMAKE_SH=CMAKE_SH-NOTFOUND"
+  fi
+
+  echo "${config_cmd}$1"
+
+  # execute command
+  $(${config_cmd}$1)
+}
+
+run_build () {
+  build_cmd="cmake --build ."
+
+  # msvc requires extra build args
+  if [ $COMPILER == "msvc" ]
+  then
+    build_cmd="${build_cmd} --config $BUILD_TYPE"
+  fi
+
+  echo "${build_cmd}"
+
+  # execute command
+  $(${build_cmd})
+}
+
+# pass additional args in $1 (starting with whitespace character)
+run_tests () {
+  test_cmd="ctest -V -C $BUILD_TYPE"
+
+  echo "${test_cmd}$1"
+
+  # execute command
+  $(${test_cmd}$1)
+}
+
+# create build dir for out-of-source build
 mkdir build
 cd build
 
-# build/test without OpenMP, with CFP (and custom namespace)
-if [ $COMPILER == "msvc" ]
-then
-  cmake -G "${GENERATOR}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DZFP_WITH_OPENMP=OFF -DBUILD_CFP=ON -DCFP_NAMESPACE=cfp2 ..
-else
-  cmake -G "${GENERATOR}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DCMAKE_SH=CMAKE_SH-NOTFOUND -DZFP_WITH_OPENMP=OFF -DBUILD_CFP=ON -DCFP_NAMESPACE=cfp2 ..
-fi
-
-if [ $COMPILER == "msvc" ]
-then
-  cmake --build . --config "${BUILD_TYPE}"
-else
-  cmake --build .
-fi
-
-ctest -V -C "${BUILD_TYPE}"
+# config without OpenMP, with CFP (and custom namespace)
+run_config " -ZFP_WITH_OPENMP=OFF -DBUILD_CFP=ON -DCFP_NAMESPACE=cfp2"
+run_build
+run_tests
 
 rm -rf ./*
 
-# build/test with OpenMP
-if [ $COMPILER == "msvc" ]
-then
-  cmake -G "${GENERATOR}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DZFP_WITH_OPENMP=ON -DZFP_ENDTOEND_TESTS_ONLY=1 ..
-else
-  cmake -G "${GENERATOR}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DCMAKE_SH=CMAKE_SH-NOTFOUND -DZFP_WITH_OPENMP=ON -DZFP_ENDTOEND_TESTS_ONLY=1 ..
-fi
-
-if [ $COMPILER == "msvc" ]
-then
-  cmake --build . --config "${BUILD_TYPE}"
-else
-  cmake --build .
-fi
-
+# config with OpenMP
+run_config " -DZFP_WITH_OPENMP=ON -DZFP_ENDTOEND_TESTS_ONLY=1"
+run_build
 # only run tests not run in previous build, due to appveyor time limit (1 hour)
-ctest -V -C "${BUILD_TYPE}" -R ".*Omp.*"
+run_tests " -R \".*Omp.*\""
