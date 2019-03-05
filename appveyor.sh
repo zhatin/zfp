@@ -46,6 +46,8 @@ run_tests () {
 mkdir build
 cd build
 
+set -ex
+
 # config without OpenMP, with CFP (and custom namespace)
 run_config " -ZFP_WITH_OPENMP=OFF -DBUILD_CFP=ON -DCFP_NAMESPACE=cfp2"
 run_build
