@@ -47,15 +47,31 @@ run_tests () {
 mkdir build
 cd build
 
-# config without OpenMP, with CFP (and custom namespace)
-run_config " -DZFP_WITH_OPENMP=OFF -DBUILD_CFP=ON -DCFP_NAMESPACE=cfp2"
-run_build
-run_tests
+## config without OpenMP, with CFP (and custom namespace)
+#run_config " -DZFP_WITH_OPENMP=OFF -DBUILD_CFP=ON -DCFP_NAMESPACE=cfp2"
+#run_build
+#run_tests
+#
+#rm -rf ./*
 
-rm -rf ./*
+# if OpenMP available, start a 2nd build with it
+check_omp_cmd=(cmake ../tests/ci-utils)
+omp_build_result=eval "${check_omp_cmd[@]}"
+echo $omp_build_result
 
-# config with OpenMP
-run_config " -DZFP_WITH_OPENMP=ON -DZFP_ENDTOEND_TESTS_ONLY=1"
-run_build
-# only run tests not run in previous build, due to appveyor time limit (1 hour)
-run_tests " -R \".*Omp.*\""
+check_omp_cmd=(cmake ../tests/ci-utils "\"$GENERATOR\"")
+omp_build_result=eval "${check_omp_cmd[@]}"
+echo $omp_build_result
+
+if [ $omp_build_result -eq 0 ]
+then
+  rm -rf ./*
+
+  # config with OpenMP
+  run_config " -DZFP_WITH_OPENMP=ON -DZFP_ENDTOEND_TESTS_ONLY=1"
+  run_build
+  # only run tests not run in previous build, due to appveyor time limit (1 hour)
+  run_tests " -R \".*Omp.*\""
+else
+  echo "OpenMP not detected, build complete."
+fi
