@@ -55,7 +55,14 @@ cd build
 #rm -rf ./*
 
 # if OpenMP available, start a 2nd build with it
-omp_build_result=$(cmake -G "$GENERATOR" "$APPVEYOR_BUILD_FOLDER/tests/ci-utils")
+
+# satisfy mingw builds
+if [ $COMPILER != "msvc" ]
+then
+  omp_build_result=$(cmake -G "$GENERATOR" "$APPVEYOR_BUILD_FOLDER/tests/ci-utils" -DCMAKE_SH=CMAKE_SH-NOTFOUND)
+else
+  omp_build_result=$(cmake -G "$GENERATOR" "$APPVEYOR_BUILD_FOLDER/tests/ci-utils")
+fi
 echo $omp_build_result
 
 if [ $omp_build_result -eq 0 ]
