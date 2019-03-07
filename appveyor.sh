@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-set -e
+set -ex
 
 # pass additional args in $1 (starting with whitespace character)
 run_config () {
@@ -55,12 +55,7 @@ cd build
 #rm -rf ./*
 
 # if OpenMP available, start a 2nd build with it
-check_omp_cmd=(cmake ../tests/ci-utils)
-omp_build_result=eval "${check_omp_cmd[@]}"
-echo $omp_build_result
-
-check_omp_cmd=(cmake ../tests/ci-utils "\"$GENERATOR\"")
-omp_build_result=eval "${check_omp_cmd[@]}"
+omp_build_result=$(cmake -G "$GENERATOR" "../../tests/ci-utils")
 echo $omp_build_result
 
 if [ $omp_build_result -eq 0 ]
