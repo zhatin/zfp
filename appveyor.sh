@@ -55,7 +55,7 @@ cd build
 #rm -rf ./*
 
 # if OpenMP available, start a 2nd build with it
-omp_build_result=$(cmake -G "$GENERATOR" "../../tests/ci-utils")
+omp_build_result=$(cmake -G "$GENERATOR" "$APPVEYOR_BUILD_FOLDER/tests/ci-utils")
 echo $omp_build_result
 
 if [ $omp_build_result -eq 0 ]
